@@ -12,6 +12,7 @@ export default function DashboardPage() {
   const [originalData, setOriginalData] = useState<any[] | null>(null);
   const [optimized, setOptimized] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [isMallaVisible, setIsMallaVisible] = useState(false);
 
   const fetchSupabaseData = async () => {
     try {
@@ -179,9 +180,12 @@ export default function DashboardPage() {
                     <RefreshCw className="h-3.5 w-3.5" /> 
                     Restaurar Datos
                   </button>
-                  <button className="hidden sm:flex text-sm font-bold text-blue-600 hover:text-blue-700 items-center gap-1 transition-colors group">
-                    Ver Malla 
-                    <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  <button 
+                    onClick={() => setIsMallaVisible(!isMallaVisible)}
+                    className="hidden sm:flex text-sm font-bold text-blue-600 hover:text-blue-700 items-center gap-1 transition-colors group"
+                  >
+                    {isMallaVisible ? 'Ocultar Malla' : 'Ver Malla'}
+                    <ChevronRight className={`h-4 w-4 transition-transform ${isMallaVisible ? 'rotate-90' : 'group-hover:translate-x-0.5'}`} />
                   </button>
                 </div>
               </div>
@@ -328,6 +332,51 @@ export default function DashboardPage() {
           </div>
 
         </div>
+
+        {isMallaVisible && (
+          <div className="mt-8 bg-white rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100">
+              <h2 className="text-lg font-bold text-slate-900">Malla Completa (Vista Detallada)</h2>
+              <span className="block text-sm text-slate-500 font-medium">Horario detallado de todos los empleados de la semana</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-100">
+                  <tr>
+                    <th className="px-6 py-4 font-bold tracking-wider">ID</th>
+                    <th className="px-6 py-4 font-bold tracking-wider">Empleado</th>
+                    <th className="px-3 py-4 font-bold tracking-wider text-center">Lunes</th>
+                    <th className="px-3 py-4 font-bold tracking-wider text-center">Martes</th>
+                    <th className="px-3 py-4 font-bold tracking-wider text-center">Miércoles</th>
+                    <th className="px-3 py-4 font-bold tracking-wider text-center">Jueves</th>
+                    <th className="px-3 py-4 font-bold tracking-wider text-center">Viernes</th>
+                    <th className="px-3 py-4 font-bold tracking-wider text-center">Sábado</th>
+                    <th className="px-3 py-4 font-bold tracking-wider text-center">Domingo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {data.map((emp) => {
+                    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                    return (
+                      <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{emp.id}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900">{emp.name}</td>
+                        {days.map((day, j) => (
+                          <td key={j} className="px-2 py-4 text-center">
+                            <span className="inline-flex items-center justify-center px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 min-w-[70px]">
+                              {emp[day] || 'Libre'}
+                            </span>
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

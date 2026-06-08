@@ -23,11 +23,10 @@ export default function WaitlistPage() {
     try {
       const { error } = await supabase
         .from('waitlist_leads')
-        .insert([
-          { email, company_size, pain_point }
-        ]);
+        .upsert([{ email, company_size, pain_point }], { onConflict: 'email' });
 
-      if (error) {
+      // Ignore unique violation errors (23505) in case upsert fails due to schema configuration
+      if (error && error.code !== '23505') {
         throw error;
       }
       
