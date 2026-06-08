@@ -288,7 +288,7 @@ export default function WaitlistPage() {
             Rotativa
           </div>
           <p className="text-slate-400 text-sm">
-            © {new Date().getFullYear()} Rotativa. Todos los derechos reservados.
+            © 2026 Rotativa. Todos los derechos reservados.
           </p>
         </div>
       </footer>

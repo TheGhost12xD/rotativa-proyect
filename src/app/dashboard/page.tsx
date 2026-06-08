@@ -6,12 +6,51 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+const INITIAL_EMPLOYEES = [
+  { name: "Carlos Ruiz", role: "Técnico", shifts: ["Mañana", "Mañana", "Tarde"], isRisk: false },
+  { name: "Ana Silva", role: "Enfermera", shifts: ["Tarde", "Tarde", "Libre"], isRisk: false },
+  { name: "María Gómez", role: "Supervisora", shifts: ["Libre", "Noche", "Noche"], isRisk: false },
+  { name: "Juan Pérez", role: "Enfermero", shifts: ["Noche", "Libre", "Mañana"], isRisk: true },
+];
+
 export default function DashboardPage() {
   const [optimized, setOptimized] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [employees, setEmployees] = useState<any[]>(INITIAL_EMPLOYEES);
 
-  const handleOptimize = () => {
-    alert("Iniciando motor de optimización de la IA... \n\nReasignando turno de Juan Pérez a María Gómez basado en disponibilidad y carga horaria. \n\n¡Turno reasignado exitosamente!");
-    setOptimized(true);
+  const handleOptimize = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/optimize-shift', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employees,
+          riskEmployee: "Juan Pérez"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error en la API');
+      }
+
+      const data = await response.json();
+      
+      if (data.newShifts && data.newShifts.employees) {
+        setEmployees(data.newShifts.employees);
+      } else {
+        throw new Error('Formato de respuesta inválido de Groq');
+      }
+      
+      setOptimized(true);
+    } catch (error) {
+      console.error(error);
+      alert('Hubo un error al procesar la IA. Verifica tu API Key.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -122,47 +161,46 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {[
-                      { name: "Carlos Ruiz", role: "Técnico", shifts: ["Mañana", "Mañana", "Tarde"] },
-                      { name: "Ana Silva", role: "Enfermera", shifts: ["Tarde", "Tarde", "Libre"] },
-                      { name: "María Gómez", role: "Supervisora", shifts: ["Libre", "Noche", "Noche"], optimizedShift: "Mañana" },
-                      { name: "Juan Pérez", role: "Enfermero", shifts: ["Noche", "Libre", "Mañana"], isRisk: true },
-                    ].map((emp, i) => (
-                      <tr key={i} className={`hover:bg-slate-50/80 transition-colors ${emp.isRisk && !optimized ? 'bg-red-50/20' : ''}`}>
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-slate-900">{emp.name}</div>
-                          <div className="text-xs text-slate-500 font-medium mt-0.5">{emp.role}</div>
-                        </td>
-                        {emp.shifts.map((shift, j) => {
-                          let badgeClass = "bg-slate-100 text-slate-600 border-slate-200";
-                          if (shift === "Mañana") badgeClass = "bg-sky-50 text-sky-700 border-sky-200";
-                          if (shift === "Tarde") badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
-                          if (shift === "Noche") badgeClass = "bg-indigo-50 text-indigo-700 border-indigo-200";
-                          if (shift === "Libre") badgeClass = "bg-slate-50 text-slate-400 border-slate-200 border-dashed";
-                          
-                          // Dynamic changes
-                          let displayShift = shift;
-                          
-                          if (emp.isRisk && j === 2 && optimized) {
-                            displayShift = "Libre";
-                            badgeClass = "bg-slate-50 text-slate-400 border-slate-200 border-dashed";
-                          } else if (emp.optimizedShift && j === 2 && optimized) {
-                            displayShift = emp.optimizedShift;
-                            badgeClass = "bg-green-50 text-green-700 border-green-300 font-bold ring-2 ring-green-100 ring-offset-1";
-                          } else if (emp.isRisk && j === 2 && !optimized) {
-                            badgeClass = "bg-red-50 text-red-700 border-red-300 font-bold shadow-sm shadow-red-100";
-                          }
+                    {employees.map((emp, i) => {
+                      const isRiskRow = emp.isRisk && !optimized;
+                      
+                      return (
+                        <tr key={i} className={`hover:bg-slate-50/80 transition-colors ${isRiskRow ? 'bg-red-50/20' : ''}`}>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-slate-900">{emp.name}</div>
+                            <div className="text-xs text-slate-500 font-medium mt-0.5">{emp.role}</div>
+                          </td>
+                          {emp.shifts.map((shift: string, j: number) => {
+                            let badgeClass = "bg-slate-100 text-slate-600 border-slate-200";
+                            
+                            // Visual color assignments
+                            if (shift === "Mañana") badgeClass = "bg-sky-50 text-sky-700 border-sky-200";
+                            if (shift === "Tarde") badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+                            if (shift === "Noche") badgeClass = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                            if (shift === "Libre") badgeClass = "bg-slate-50 text-slate-400 border-slate-200 border-dashed";
+                            
+                            // If it's a risk shift not optimized yet
+                            if (emp.isRisk && j === 2 && !optimized) {
+                              badgeClass = "bg-red-50 text-red-700 border-red-300 font-bold shadow-sm shadow-red-100 animate-pulse";
+                            }
+                            
+                            // Highlight changes dynamically based on AI output (Comparing with initial state)
+                            const initialShift = INITIAL_EMPLOYEES[i].shifts[j];
+                            if (optimized && shift !== initialShift) {
+                              badgeClass = "bg-green-50 text-green-700 border-green-300 font-bold ring-2 ring-green-100 ring-offset-1";
+                            }
 
-                          return (
-                            <td key={j} className="px-6 py-4 text-center">
-                              <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border w-20 transition-all ${badgeClass}`}>
-                                {displayShift}
-                              </span>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
+                            return (
+                              <td key={j} className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border w-20 transition-all ${badgeClass}`}>
+                                  {shift}
+                               </span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -209,10 +247,23 @@ export default function DashboardPage() {
 
                     <button 
                       onClick={handleOptimize}
-                      className="w-full bg-white text-indigo-950 hover:bg-blue-50 font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.23)] transform hover:-translate-y-0.5"
+                      disabled={loading}
+                      className="w-full bg-white text-indigo-950 hover:bg-blue-50 font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.23)] transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      <ArrowRightLeft className="h-4 w-4" />
-                      Reasignar preventivamente
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-indigo-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Procesando IA...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowRightLeft className="h-4 w-4" />
+                          Reasignar preventivamente
+                        </>
+                      )}
                     </button>
                   </div>
                 ) : (
@@ -225,7 +276,7 @@ export default function DashboardPage() {
                     </div>
                     <h4 className="font-bold text-white mb-2 text-lg">Riesgo Mitigado</h4>
                     <p className="text-sm text-green-100/90 leading-relaxed font-medium">
-                      Turno de Miércoles reasignado a María Gómez de forma inteligente. Se han enviado notificaciones por WhatsApp a los involucrados.
+                      Los turnos de la semana han sido reasignados por la IA de forma inteligente. Se han enviado notificaciones por WhatsApp a los involucrados.
                     </p>
                   </div>
                 )}
