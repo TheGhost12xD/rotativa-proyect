@@ -1,29 +1,43 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { CalendarClock, FileSpreadsheet, MessageCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function WaitlistPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg('');
     
     const formData = new FormData(e.currentTarget);
-    const data = {
-      email: formData.get('email'),
-      size: formData.get('size'),
-    };
+    const email = formData.get('email') as string;
+    const company_size = formData.get('size') as string;
+    const pain_point = formData.get('pain_point') as string;
     
-    console.log("Waitlist submission:", data);
-    
-    // Simulate network request
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('waitlist_leads')
+        .insert([
+          { email, company_size, pain_point }
+        ]);
+
+      if (error) {
+        throw error;
+      }
+      
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error('Error insertando en supabase:', err);
+      setErrorMsg('Ocurrió un error al enviar tu solicitud. Inténtalo nuevamente.');
+    } finally {
       setLoading(false);
-      setSuccess(true);
-    }, 1500);
+    }
   };
 
   return (
@@ -59,16 +73,12 @@ export default function WaitlistPage() {
 
             {/* Waitlist Form */}
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100">
-              {success ? (
-                <div className="flex flex-col items-center justify-center text-center space-y-4 py-6">
-                  <div className="h-12 w-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-                    <CheckCircle2 className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900">¡Estás en la lista!</h3>
-                  <p className="text-slate-600">Te contactaremos pronto con acceso prioritario.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                  {errorMsg && (
+                    <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
+                      {errorMsg}
+                    </div>
+                  )}
                   <div className="space-y-1.5">
                     <label htmlFor="email" className="text-sm font-medium text-slate-700">
                       Correo corporativo
@@ -99,6 +109,25 @@ export default function WaitlistPage() {
                       <option value="50+">Más de 50 empleados</option>
                     </select>
                   </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="pain_point" className="text-sm font-medium text-slate-700">
+                      ¿Cuál es tu mayor desafío actual?
+                    </label>
+                    <select
+                      id="pain_point"
+                      name="pain_point"
+                      required
+                      defaultValue=""
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-slate-50 focus:bg-white appearance-none"
+                    >
+                      <option value="" disabled>Selecciona una opción</option>
+                      <option value="Generar la malla toma muchas horas">Generar la malla toma muchas horas</option>
+                      <option value="Muchos cambios de turno manuales">Muchos cambios de turno manuales</option>
+                      <option value="Dificultad para cubrir ausencias">Dificultad para cubrir ausencias</option>
+                      <option value="Multas o problemas de cumplimiento">Multas o problemas de cumplimiento</option>
+                      <option value="Otro">Otro</option>
+                    </select>
+                  </div>
                   <button
                     type="submit"
                     disabled={loading}
@@ -110,7 +139,7 @@ export default function WaitlistPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Procesando...
+                        Enviando...
                       </>
                     ) : (
                       <>
@@ -122,7 +151,6 @@ export default function WaitlistPage() {
                     )}
                   </button>
                 </form>
-              )}
             </div>
           </div>
 
