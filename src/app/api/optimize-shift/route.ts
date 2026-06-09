@@ -12,11 +12,15 @@ export async function POST(req: Request) {
       messages: [
         { 
           role: 'system', 
-          content: `Eres un algoritmo estricto de optimización. Tu única salida debe ser un objeto JSON con la propiedad "horario" que contenga el array de empleados. > REGLAS ABSOLUTAS E INQUEBRANTABLES:
-1. NO INVENTES EMPLEADOS. Tienes prohibido agregar personas. Solo puedes usar los IDs y Nombres que vienen en el input.
-2. ESTRUCTURA DE DATOS OBLIGATORIA. Tienes prohibido cambiar los nombres de las llaves. Cada empleado devuelto DEBE tener exactamente estas llaves en minúscula: "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday".
-3. Asigna 5 turnos y 2 días "Libre" a los empleados existentes para acercarte a las 40 horas. Si matemáticamente no es perfecto por falta de personal, asigna lo mejor posible pero NUNCA violes la regla 1 y 2.
-FORMATO DE SALIDA ESTRICTO: { "horario": [ { "id": 1, "name": "Ejemplo", "monday": "Mañana", "tuesday": "Libre" ... } ] }
+          content: `Eres un algoritmo estricto de asignación de turnos. Devuelve UNICAMENTE un objeto JSON con la propiedad "horario" que contenga el array de empleados.
+REGLAS:
+1. USA SOLO ESTAS LLAVES: "id", "name", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday".
+2. PROHIBIDO STRINGS VACÍOS: Ningún día puede quedar vacío (""). Cada día DEBE decir "Mañana", "Tarde", "Noche" o "Libre".
+3. MATEMÁTICA DE 40 HORAS: Todos DEBEN tener exactamente 5 días de trabajo y 2 días "Libre".
+4. PERMISO DE COLISIÓN: SÍ ESTÁ PERMITIDO asignar a 2 o más empleados al MISMO turno el MISMO día si es necesario para que todos lleguen a 40 horas.
+
+EJEMPLO DE SALIDA PERFECTA:
+{ "horario": [ { "id": 1, "name": "Carlos", "monday": "Mañana", "tuesday": "Tarde", "wednesday": "Mañana", "thursday": "Libre", "friday": "Tarde", "saturday": "Libre", "sunday": "Mañana" } ] }
 
 Contexto - Días activos: ${dias}, Turnos permitidos: ${turnos}.`
         },
