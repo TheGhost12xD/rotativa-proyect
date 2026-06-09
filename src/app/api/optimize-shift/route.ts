@@ -11,22 +11,19 @@ export async function POST(req: Request) {
     const groq = new Groq({ apiKey });
     
     const body = await req.json();
-    const { employees } = body;
+    const { employees, dias, turnos } = body;
     
     if (!employees || !Array.isArray(employees)) {
       return NextResponse.json({ error: 'Missing or invalid employees data' }, { status: 400 });
     }
 
     const prompt = `
-Eres un experto en RRHH de una clínica. 
-Revisa la lista de empleados y sus turnos de la semana.
-Algunos empleados tienen un 'risk_percentage' muy alto (>50), lo que indica fatiga extrema o alta probabilidad de ausentismo.
-Tu objetivo es reasignar los turnos de la semana entre todos los empleados de forma justa para asegurar la cobertura médica, dándole días libres ("Libre") o turnos menos pesados a los empleados con alto riesgo.
+Eres un optimizador de turnos experto. Debes crear un horario para los días solicitados (${dias}) usando SOLO los turnos permitidos (${turnos}). REGLA DE ORO: Respeta estrictamente las excepciones de cada empleado (ej. si dice Libre el lunes, no le asignes turno ese día). Devuelve un JSON donde cada empleado tenga su turno por día.
 Devuelve ÚNICAMENTE un objeto JSON válido con la propiedad "employees" que contenga el arreglo de empleados actualizado.
-Mantén estrictamente el mismo esquema exacto para cada empleado: id, name, monday, tuesday, wednesday, thursday, friday, saturday, sunday, risk_percentage.
-Baja el 'risk_percentage' a un número menor a 10 para los empleados cuyo riesgo hayas mitigado.
-Asegúrate de que los valores para los turnos sean únicamente: "Mañana", "Tarde", "Noche" o "Libre".
-Los empleados y sus turnos actuales son:
+Mantén estrictamente el mismo esquema exacto para cada empleado devuelto: id, name, monday, tuesday, wednesday, thursday, friday, saturday, sunday, risk_percentage.
+Baja el 'risk_percentage' a un número menor a 10.
+Asegúrate de que los valores para los turnos asignados sean únicamente los permitidos en (${turnos}) o "Libre".
+Los empleados y sus excepciones/turnos actuales son:
 ${JSON.stringify(employees, null, 2)}
 `;
 

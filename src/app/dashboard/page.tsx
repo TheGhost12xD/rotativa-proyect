@@ -2,10 +2,12 @@
 
 import { 
   Users, AlertTriangle, Clock, CalendarClock, Bell, UserCircle, 
-  BrainCircuit, ArrowRightLeft, CheckCircle2, ChevronRight, RefreshCw
+  BrainCircuit, ArrowRightLeft, CheckCircle2, ChevronRight, RefreshCw,
+  Upload, Settings
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import Papa from 'papaparse';
 
 export default function DashboardPage() {
   const [data, setData] = useState<any[] | null>(null);
@@ -13,6 +15,10 @@ export default function DashboardPage() {
   const [optimized, setOptimized] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
   const [isMallaVisible, setIsMallaVisible] = useState(false);
+  
+  // Parámetros de Configuración
+  const [dias, setDias] = useState('Lunes a Viernes');
+  const [turnosHabilitados, setTurnosHabilitados] = useState({ manana: true, tarde: true, noche: true });
 
   const fetchSupabaseData = async () => {
     try {
@@ -38,10 +44,46 @@ export default function DashboardPage() {
     fetchSupabaseData();
   }, []);
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const newEmployees = results.data.map((row: any, index: number) => {
+          return {
+            id: index + 1,
+            name: row['Nombre'] || `Empleado ${index + 1}`,
+            excepciones: row['Excepciones'] || '',
+            monday: 'Libre',
+            tuesday: 'Libre',
+            wednesday: 'Libre',
+            thursday: 'Libre',
+            friday: 'Libre',
+            saturday: 'Libre',
+            sunday: 'Libre',
+            risk_percentage: 0 // New data assumes stable risk initially
+          };
+        });
+        setData(newEmployees);
+        setOriginalData(newEmployees);
+        setOptimized(false);
+      }
+    });
+  };
+
   const handleOptimize = async () => {
     if (!originalData) return;
     
     setLoadingAI(true);
+    
+    const turnosActivos = Object.entries(turnosHabilitados)
+      .filter(([_, active]) => active)
+      .map(([name]) => name === 'manana' ? 'Mañana' : name === 'tarde' ? 'Tarde' : 'Noche')
+      .join(', ');
+
     try {
       const response = await fetch('/api/optimize-shift', {
         method: 'POST',
@@ -49,7 +91,9 @@ export default function DashboardPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          employees: originalData
+          employees: originalData,
+          dias: dias,
+          turnos: turnosActivos
         })
       });
 
@@ -70,6 +114,20 @@ export default function DashboardPage() {
     }
   };
 
+  const calculateTotalHours = (emp: any) => {
+    let weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    if (dias === 'Lunes a Viernes') {
+      weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    }
+    
+    return weekDays.reduce((acc, day) => {
+      if (['Mañana', 'Tarde', 'Noche'].includes(emp[day])) {
+        return acc + 8;
+      }
+      return acc;
+    }, 0);
+  };
+
   if (!data || !originalData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-500 gap-3">
@@ -80,6 +138,7 @@ export default function DashboardPage() {
   }
 
   const criticalEmployee = originalData.find(e => e.risk_percentage > 50) || originalData[0];
+  const activeHoursProjected = data.reduce((acc, emp) => acc + calculateTotalHours(emp), 0);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-200">
@@ -117,6 +176,51 @@ export default function DashboardPage() {
           <span className="block text-slate-500 mt-1 font-medium">Resumen operativo semanal (Sincronizado en tiempo real)</span>
         </div>
 
+        {/* Panel de Configuración */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-200 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Settings className="h-5 w-5 text-blue-600" />
+            <h2 className="text-lg font-bold text-slate-900">Parámetros del Horario</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700">Días a programar</label>
+              <select 
+                value={dias}
+                onChange={(e) => setDias(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm bg-slate-50"
+              >
+                <option value="Lunes a Viernes">Lunes a Viernes</option>
+                <option value="Lunes a Domingo">Lunes a Domingo</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700">Tipos de turno habilitados</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <input type="checkbox" checked={turnosHabilitados.manana} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, manana: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> Mañana
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <input type="checkbox" checked={turnosHabilitados.tarde} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, tarde: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> Tarde
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <input type="checkbox" checked={turnosHabilitados.noche} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, noche: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> Noche
+                </label>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700">Carga de Personal (CSV)</label>
+              <div className="flex items-center gap-2">
+                <label className="flex-1 cursor-pointer bg-slate-50 border border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 transition-colors rounded-lg px-4 py-2 flex items-center justify-center gap-2 text-sm text-slate-600 font-medium">
+                  <Upload className="h-4 w-4" />
+                  Subir Excel / CSV
+                  <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-200 flex items-center justify-between">
             <div>
@@ -147,9 +251,9 @@ export default function DashboardPage() {
 
           <div className="bg-white p-6 rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-200 flex items-center justify-between">
             <div>
-              <span className="block text-sm font-semibold text-slate-500 mb-1 uppercase tracking-wide">Horas Extra</span>
+              <span className="block text-sm font-semibold text-slate-500 mb-1 uppercase tracking-wide">Horas Asignadas (Totales)</span>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-extrabold text-slate-900">{optimized ? '1.5' : '5.5'}</h3>
+                <h3 className="text-4xl font-extrabold text-slate-900">{activeHoursProjected}</h3>
                 <span className="text-xl text-slate-400 font-medium tracking-normal"> hrs</span>
               </div>
             </div>
@@ -165,7 +269,7 @@ export default function DashboardPage() {
               <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Optimizador de Turnos</h2>
-                  <span className="block text-sm text-slate-500 font-medium">Conectado a Base de Datos en Tiempo Real</span>
+                  <span className="block text-sm text-slate-500 font-medium">Malla generada en base a parámetros</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <button 
@@ -178,7 +282,7 @@ export default function DashboardPage() {
                     className="text-xs font-semibold text-slate-500 hover:text-slate-700 border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all disabled:opacity-50"
                   >
                     <RefreshCw className="h-3.5 w-3.5" /> 
-                    Restaurar Datos
+                    Reset Supabase
                   </button>
                   <button 
                     onClick={() => setIsMallaVisible(!isMallaVisible)}
@@ -202,6 +306,7 @@ export default function DashboardPage() {
                       <th className="px-3 py-4 font-bold tracking-wider text-center">Vie</th>
                       <th className="px-3 py-4 font-bold tracking-wider text-center">Sáb</th>
                       <th className="px-3 py-4 font-bold tracking-wider text-center">Dom</th>
+                      <th className="px-3 py-4 font-bold tracking-wider text-center">Total Horas</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -214,9 +319,16 @@ export default function DashboardPage() {
                         <tr key={emp.id} className={`hover:bg-slate-50/80 transition-colors ${isRiskRow ? 'bg-red-50/20' : ''}`}>
                           <td className="px-6 py-4">
                             <div className="font-bold text-slate-900 whitespace-nowrap">{emp.name}</div>
-                            <div className={`text-[10px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full ${emp.risk_percentage > 50 && !optimized ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-green-100 text-green-700'}`}>
-                              Riesgo: {emp.risk_percentage || 0}%
-                            </div>
+                            {emp.excepciones && (
+                              <div className="text-[10px] font-medium mt-1 text-slate-500 max-w-[120px] truncate">
+                                Exc: {emp.excepciones}
+                              </div>
+                            )}
+                            {emp.risk_percentage > 0 && (
+                              <div className={`text-[10px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full ${emp.risk_percentage > 50 && !optimized ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-green-100 text-green-700'}`}>
+                                Riesgo: {emp.risk_percentage}%
+                              </div>
+                            )}
                           </td>
                           {days.map((day, j) => {
                             const shift = emp[day] || 'Libre';
@@ -233,18 +345,21 @@ export default function DashboardPage() {
                               badgeClass = "bg-red-50 text-red-700 border-red-300 font-bold shadow-sm shadow-red-100";
                             }
                             
-                            if (optimized && shift !== initialShift) {
+                            if (optimized && shift !== initialShift && shift !== 'Libre') {
                               badgeClass = "bg-green-50 text-green-700 border-green-300 font-bold ring-2 ring-green-100 ring-offset-1";
                             }
 
                             return (
                               <td key={j} className="px-2 py-4 text-center">
-                                <span className={`inline-flex items-center justify-center px-2 py-1.5 rounded-lg text-xs font-semibold border min-w-[65px] transition-all ${badgeClass}`}>
+                                <span className={`inline-flex items-center justify-center px-2 py-1.5 rounded-lg text-[11px] font-semibold border min-w-[60px] transition-all ${badgeClass}`}>
                                   {shift}
                                 </span>
                               </td>
                             );
                           })}
+                          <td className="px-3 py-4 text-center font-bold text-slate-700">
+                            {calculateTotalHours(emp)}h
+                          </td>
                         </tr>
                       );
                     })}
@@ -268,7 +383,7 @@ export default function DashboardPage() {
                 </div>
                 <span className="block text-sm text-blue-200/80 mb-6 font-medium">Monitoreando patrones de asistencia y fatiga.</span>
                 
-                {!optimized && criticalEmployee ? (
+                {!optimized && criticalEmployee && criticalEmployee.risk_percentage > 50 ? (
                   <div className="bg-white/[0.08] backdrop-blur-md border border-white/10 rounded-xl p-5 mb-6 shadow-inner relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
                     
@@ -316,15 +431,32 @@ export default function DashboardPage() {
                         <CheckCircle2 className="h-7 w-7" />
                       </div>
                     </div>
-                    <h4 className="font-bold text-white mb-2 text-lg">Riesgo Mitigado</h4>
+                    <h4 className="font-bold text-white mb-2 text-lg">Malla Generada Exitosa</h4>
                     <span className="block text-sm text-green-100/90 leading-relaxed font-medium">
-                      Los turnos de la semana han sido reasignados por la IA de forma equilibrada.
+                      Los turnos han sido asignados por la IA respetando parámetros y excepciones.
                     </span>
                   </div>
                 ) : (
                   <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-6 text-center text-white/50">
-                    <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <span className="block text-sm">Todos los perfiles estables.</span>
+                    <CheckCircle2 className="h-8 w-8 mx-auto mb-4 opacity-50" />
+                    <span className="block text-sm font-medium mb-4 text-white">Configuración Lista.</span>
+                    <button 
+                      onClick={handleOptimize}
+                      disabled={loadingAI}
+                      className="w-full bg-white text-indigo-950 hover:bg-blue-50 font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.23)] transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {loadingAI ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 text-indigo-950 animate-spin" />
+                          Generando Malla...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowRightLeft className="h-4 w-4" />
+                          Optimizar Turnos con IA
+                        </>
+                      )}
+                    </button>
                   </div>
                 )}
               </div>
@@ -352,6 +484,7 @@ export default function DashboardPage() {
                     <th className="px-3 py-4 font-bold tracking-wider text-center">Viernes</th>
                     <th className="px-3 py-4 font-bold tracking-wider text-center">Sábado</th>
                     <th className="px-3 py-4 font-bold tracking-wider text-center">Domingo</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-center bg-blue-50/50">Total Hrs</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -368,6 +501,9 @@ export default function DashboardPage() {
                             </span>
                           </td>
                         ))}
+                        <td className="px-6 py-4 font-bold text-center text-blue-700 bg-blue-50/30">
+                          {calculateTotalHours(emp)}h
+                        </td>
                       </tr>
                     );
                   })}
@@ -380,4 +516,3 @@ export default function DashboardPage() {
       </main>
     </div>
   );
-}

@@ -63,10 +63,10 @@ export default function WaitlistPage() {
                 Acceso Anticipado
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
-                El caos de los turnos rotativos se <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">acaba aquí</span>.
+                Acaba con el caos de administrar turnos rotativos en <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Excel</span>.
               </h1>
               <p className="text-lg md:text-xl text-slate-600 leading-relaxed">
-                Coordina mallas horarias, predice ausencias y notifica a tu equipo por WhatsApp en minutos. No más Excel.
+                Sube tu planilla, define tus reglas y deja que nuestra IA asigne horarios justos, calcule horas y respete las excepciones de tu equipo en segundos.
               </p>
             </div>
 
