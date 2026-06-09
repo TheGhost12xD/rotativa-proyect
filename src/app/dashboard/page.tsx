@@ -77,7 +77,8 @@ export default function DashboardPage() {
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'API request failed');
       }
 
       const resData = await response.json();

@@ -33,6 +33,7 @@ REGLAS MATEMÁTICAS INQUEBRANTABLES:
 Genera el JSON respetando estas reglas al 100%.
 
 Mantén estrictamente el mismo esquema exacto para cada empleado devuelto: id, name, monday, tuesday, wednesday, thursday, friday, saturday, sunday, risk_percentage.
+OUTPUT FORMAT: RETURN ONLY RAW JSON. DO NOT USE MARKDOWN FORMATTING. DO NOT WRAP IN \`\`\`json. JUST START WITH { AND END WITH }.
 Los empleados y sus excepciones/turnos actuales son:
 ${JSON.stringify(employees, null, 2)}
 `;
@@ -46,10 +47,19 @@ ${JSON.stringify(employees, null, 2)}
 
     const content = chatCompletion.choices[0]?.message?.content || '{}';
     console.log('Respuesta de Groq:', content);
-    const newShifts = JSON.parse(content);
+    
+    let newShifts;
+    try {
+      let cleanText = content.replace(/```json/g, '').replace(/```/g, '').trim();
+      newShifts = JSON.parse(cleanText);
+    } catch (parseError) {
+      console.error('Error parseando JSON de Groq:', parseError);
+      return NextResponse.json({ error: 'La IA no devolvió un JSON válido', rawText: content }, { status: 500 });
+    }
     
     return NextResponse.json({ success: true, newShifts });
   } catch (error: any) {
+    console.error('Error general en endpoint:', error);
     return NextResponse.json({ error: 'Fallo en IA' }, { status: 500 });
   }
 }
