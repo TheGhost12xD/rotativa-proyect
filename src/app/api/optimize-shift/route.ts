@@ -3,6 +3,7 @@ import Groq from 'groq-sdk';
 
 export async function POST(req: Request) {
   try {
+    console.log('¿La API KEY existe?', !!process.env.GROQ_API_KEY);
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'Missing GROQ_API_KEY in environment variables' }, { status: 500 });
@@ -11,6 +12,7 @@ export async function POST(req: Request) {
     const groq = new Groq({ apiKey });
     
     const body = await req.json();
+    console.log('Recibiendo datos en API:', body);
     const { employees, dias, turnos } = body;
     
     if (!employees || !Array.isArray(employees)) {
@@ -43,10 +45,11 @@ ${JSON.stringify(employees, null, 2)}
     });
 
     const content = chatCompletion.choices[0]?.message?.content || '{}';
+    console.log('Respuesta de Groq:', content);
     const newShifts = JSON.parse(content);
     
     return NextResponse.json({ success: true, newShifts });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Fallo en IA' }, { status: 500 });
   }
 }

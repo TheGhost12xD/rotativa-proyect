@@ -59,17 +59,21 @@ export default function DashboardPage() {
       .map(([name]) => name === 'manana' ? 'Mañana' : name === 'tarde' ? 'Tarde' : 'Noche')
       .join(', ');
 
+    const payload = {
+      employees: originalData,
+      dias: dias,
+      turnos: turnosActivos
+    };
+    
+    console.log('Enviando a IA:', JSON.stringify(payload));
+
     try {
       const response = await fetch('/api/optimize-shift', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          employees: originalData,
-          dias: dias,
-          turnos: turnosActivos
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -82,8 +86,9 @@ export default function DashboardPage() {
         setData(resData.newShifts.employees);
         setOptimized(true);
       }
-    } catch (error) {
-      alert('Error en la llamada a Groq IA. Intenta de nuevo.');
+    } catch (error: any) {
+      console.error('Error en fetch:', error);
+      alert('Error: ' + error.message);
     } finally {
       setLoadingAI(false);
     }
