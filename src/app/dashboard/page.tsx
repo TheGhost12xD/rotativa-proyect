@@ -158,8 +158,10 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Días a programar</label>
+              <label htmlFor="diasProgramar" className="text-sm font-semibold text-slate-700">Días a programar</label>
               <select 
+                id="diasProgramar"
+                name="diasProgramar"
                 value={dias}
                 onChange={(e) => setDias(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm bg-slate-50"
@@ -169,26 +171,29 @@ export default function DashboardPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Tipos de turno habilitados</label>
+              <span className="text-sm font-semibold text-slate-700 block">Tipos de turno habilitados</span>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <input type="checkbox" checked={turnosHabilitados.manana} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, manana: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> Mañana
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <input type="checkbox" checked={turnosHabilitados.tarde} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, tarde: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> Tarde
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <input type="checkbox" checked={turnosHabilitados.noche} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, noche: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> Noche
-                </label>
+                <div className="flex items-center gap-2">
+                  <input id="turnoManana" name="turnoManana" type="checkbox" checked={turnosHabilitados.manana} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, manana: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> 
+                  <label htmlFor="turnoManana" className="text-sm text-slate-600 cursor-pointer">Mañana</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input id="turnoTarde" name="turnoTarde" type="checkbox" checked={turnosHabilitados.tarde} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, tarde: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> 
+                  <label htmlFor="turnoTarde" className="text-sm text-slate-600 cursor-pointer">Tarde</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input id="turnoNoche" name="turnoNoche" type="checkbox" checked={turnosHabilitados.noche} onChange={(e) => setTurnosHabilitados({...turnosHabilitados, noche: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" /> 
+                  <label htmlFor="turnoNoche" className="text-sm text-slate-600 cursor-pointer">Noche</label>
+                </div>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Carga de Personal (CSV)</label>
+              <span className="text-sm font-semibold text-slate-700 block">Carga de Personal (CSV)</span>
               <div className="flex items-center gap-2">
-                <label className="flex-1 cursor-pointer bg-slate-50 border border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 transition-colors rounded-lg px-4 py-2 flex items-center justify-center gap-2 text-sm text-slate-600 font-medium">
+                <label htmlFor="csvUpload" className="flex-1 cursor-pointer bg-slate-50 border border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 transition-colors rounded-lg px-4 py-2 flex items-center justify-center gap-2 text-sm text-slate-600 font-medium">
                   <Upload className="h-4 w-4" />
                   Subir Excel / CSV
-                  <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+                  <input id="csvUpload" name="csvUpload" type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
                 </label>
               </div>
             </div>
