@@ -83,15 +83,15 @@ export default function DashboardPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || 'API request failed');
+        const errorText = await response.text();
+        throw new Error(`Error del servidor (${response.status}): ${errorText}`);
       }
 
-      const resData = await response.json();
-      console.log('Respuesta recibida del servidor:', resData);
+      const data = await response.json();
+      console.log('Respuesta RECIBIDA:', data);
       
-      if (resData.newShifts && resData.newShifts.employees) {
-        setData(resData.newShifts.employees);
+      if (data.newShifts && data.newShifts.employees) {
+        setData(data.newShifts.employees);
         setOptimized(true);
       }
     } catch (err: any) {

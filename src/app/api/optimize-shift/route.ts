@@ -60,6 +60,6 @@ ${JSON.stringify(employees, null, 2)}
     return NextResponse.json({ success: true, newShifts });
   } catch (error: any) {
     console.error('Error general en endpoint:', error);
-    return NextResponse.json({ error: 'Fallo en IA' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
