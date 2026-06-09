@@ -88,11 +88,16 @@ export default function DashboardPage() {
       }
 
       const data = await response.json();
-      console.log('Respuesta RECIBIDA:', data);
+      console.log('Respuesta recibida:', data);
       
-      if (data.horario) {
-        setData(data.horario);
+      // Extraer el array sin importar cómo lo llame Groq
+      const arrayOptimizados = data.empleados || data.horario || data.employees || data;
+
+      if (Array.isArray(arrayOptimizados)) {
+        setData(arrayOptimizados);
         setOptimized(true);
+      } else {
+        alert('Error: La IA devolvió un formato no esperado.');
       }
     } catch (err: any) {
       console.error(err);
