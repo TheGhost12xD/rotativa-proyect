@@ -7,11 +7,11 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { dias, turnos, employees } = body;
-    
+
     const chatCompletion = await groq.chat.completions.create({
       messages: [
-        { 
-          role: 'system', 
+        {
+          role: 'system',
           content: `Eres un algoritmo estricto de RRHH. Devuelve un objeto JSON con la propiedad "horario" que contenga el array de empleados.
     CONTEXTO: Días de operación: ${dias}. Turnos: ${turnos}.
     
@@ -24,12 +24,12 @@ export async function POST(req: Request) {
     
     EJEMPLO DE SALIDA PERFECTA: { "horario": [ { "id": 1, "name": "Carlos", "monday": "Mañana", "tuesday": "Tarde", "wednesday": "Mañana", "thursday": "Libre", "friday": "Tarde", "saturday": "Libre", "sunday": "Libre" } ] }`
         },
-        { 
-          role: 'user', 
-          content: JSON.stringify(employees) 
+        {
+          role: 'user',
+          content: JSON.stringify(employees)
         }
       ],
-      model: 'llama-3.1-70b-versatile',
+      model: 'llama-3.3-70b-versatile',
       response_format: { type: 'json_object' }
     });
 
