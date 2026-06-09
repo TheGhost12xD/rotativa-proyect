@@ -18,7 +18,9 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-Eres un optimizador de turnos experto. Debes crear un horario para los días solicitados (${dias}) usando SOLO los turnos permitidos (${turnos}). REGLA DE ORO: Respeta estrictamente las excepciones de cada empleado (ej. si dice Libre el lunes, no le asignes turno ese día). Devuelve un JSON donde cada empleado tenga su turno por día.
+Eres un optimizador de turnos experto. Debes crear un horario para los días solicitados (${dias}) usando SOLO los turnos permitidos (${turnos}). 
+REGLA DE ORO: Respeta estrictamente las excepciones de cada empleado (ej. si dice Libre el lunes, no le asignes turno ese día). 
+REGLA CRÍTICA LEGAL: Cada empleado DEBE cumplir exactamente con 40 horas semanales. Como cada turno dura 8 horas, DEBES asignar exactamente 5 turnos de trabajo por empleado a la semana. Los días restantes DEBEN decir estrictamente "Libre". Es inaceptable que un empleado tenga menos de 40 horas (menos de 5 turnos) o más de 40 horas, a menos que sea matemáticamente imposible por sus excepciones. Prioriza siempre llegar a los 5 turnos.
 Devuelve ÚNICAMENTE un objeto JSON válido con la propiedad "employees" que contenga el arreglo de empleados actualizado.
 Mantén estrictamente el mismo esquema exacto para cada empleado devuelto: id, name, monday, tuesday, wednesday, thursday, friday, saturday, sunday, risk_percentage.
 Baja el 'risk_percentage' a un número menor a 10.

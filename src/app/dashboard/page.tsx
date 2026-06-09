@@ -124,7 +124,6 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
               <div className="hidden sm:block text-right">
                 <span className="block text-sm font-bold text-slate-700 leading-tight">Administrador</span>
-                <span className="block text-xs text-slate-500 font-medium">Clínica San José</span>
               </div>
               <UserCircle className="h-9 w-9 text-slate-300 hover:text-slate-400 cursor-pointer transition-colors" />
             </div>
@@ -329,7 +328,7 @@ export default function DashboardPage() {
                                   </td>
                                 );
                               })}
-                              <td className="px-3 py-4 text-center font-bold text-slate-700">
+                              <td className={`px-3 py-4 text-center font-bold ${calculateTotalHours(emp) === 40 ? 'text-green-600' : 'text-red-600'}`}>
                                 {calculateTotalHours(emp)}h
                               </td>
                             </tr>
@@ -473,7 +472,7 @@ export default function DashboardPage() {
                                 </span>
                               </td>
                             ))}
-                            <td className="px-6 py-4 font-bold text-center text-blue-700 bg-blue-50/30">
+                            <td className={`px-6 py-4 font-bold text-center ${calculateTotalHours(emp) === 40 ? 'text-green-600 bg-green-50/30' : 'text-red-600 bg-red-50/30'}`}>
                               {calculateTotalHours(emp)}h
                             </td>
                           </tr>
