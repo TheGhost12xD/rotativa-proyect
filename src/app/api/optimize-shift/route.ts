@@ -8,11 +8,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { dias, turnos, employees } = body;
     
-    // Usamos gemini-1.5-pro y forzamos salida JSON nativa
-    const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-pro',
-        generationConfig: { responseMimeType: 'application/json' }
-    });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `Eres un algoritmo estricto de RRHH. Devuelve un objeto JSON con la propiedad "horario" que contenga el array de empleados.
     CONTEXTO: Días de operación: ${dias}. Turnos: ${turnos}.
@@ -25,10 +21,13 @@ export async function POST(req: Request) {
     4. 40 HORAS: Todo empleado DEBE trabajar exactamente 5 turnos a la semana y tener 2 días "Libre".
     5. COBERTURA: Ningún día activo puede quedar sin empleados. Puedes poner a 2 personas en el mismo turno si es necesario para llegar a las 40 horas. NO dejes días vacíos ("").
     
-    EJEMPLO DE SALIDA: { "horario": [ { "id": 1, "name": "Carlos", "monday": "Mañana", "tuesday": "Tarde", "wednesday": "Mañana", "thursday": "Libre", "friday": "Tarde", "saturday": "Libre", "sunday": "Libre" } ] }`;
+    EJEMPLO DE SALIDA: { "horario": [ { "id": 1, "name": "Carlos", "monday": "Mañana", "tuesday": "Tarde", "wednesday": "Mañana", "thursday": "Libre", "friday": "Tarde", "saturday": "Libre", "sunday": "Libre" } ] }
+    
+    IMPORTANTE: DEVUELVE ÚNICAMENTE EL JSON PURO. NO USES FORMATO MARKDOWN. NO PONGAS \`\`\`json AL PRINCIPIO NI \`\`\` AL FINAL. COMIENZA DIRECTAMENTE CON LA LLAVE { Y TERMINA CON LA LLAVE }.`;
 
     const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    let responseText = result.response.text();
+    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     
     return NextResponse.json(JSON.parse(responseText));
 
