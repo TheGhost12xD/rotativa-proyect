@@ -49,25 +49,31 @@ export default function DashboardPage() {
     });
   };
 
-  const handleOptimize = async () => {
-    if (originalData.length === 0) return;
-    
-    setLoadingAI(true);
-    
-    const turnosActivos = Object.entries(turnosHabilitados)
-      .filter(([_, active]) => active)
-      .map(([name]) => name === 'manana' ? 'Mañana' : name === 'tarde' ? 'Tarde' : 'Noche')
-      .join(', ');
+  const handleOptimize = async (e?: any) => {
+    console.log('Iniciando optimización...');
+    if (e && e.preventDefault) e.preventDefault();
 
-    const payload = {
-      employees: originalData,
-      dias: dias,
-      turnos: turnosActivos
-    };
+    if (!originalData || originalData.length === 0) {
+      alert('Faltan datos para optimizar: No hay empleados cargados');
+      return;
+    }
     
-    console.log('Enviando a IA:', JSON.stringify(payload));
-
     try {
+      setLoadingAI(true);
+      
+      const turnosActivos = Object.entries(turnosHabilitados)
+        .filter(([_, active]) => active)
+        .map(([name]) => name === 'manana' ? 'Mañana' : name === 'tarde' ? 'Tarde' : 'Noche')
+        .join(', ');
+
+      const payload = {
+        employees: originalData,
+        dias: dias,
+        turnos: turnosActivos
+      };
+      
+      console.log('Payload a enviar:', payload);
+
       const response = await fetch('/api/optimize-shift', {
         method: 'POST',
         headers: {
@@ -87,9 +93,9 @@ export default function DashboardPage() {
         setData(resData.newShifts.employees);
         setOptimized(true);
       }
-    } catch (error: any) {
-      console.error('Error en fetch:', error);
-      alert('Error: ' + error.message);
+    } catch (err: any) {
+      console.error(err);
+      alert('Error en el frontend: ' + err.message);
     } finally {
       setLoadingAI(false);
     }
