@@ -8,6 +8,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { dias, turnos, employees } = body;
     
+    // Usamos el modelo 1.0 universal (gemini-pro) sin generationConfig
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `Eres un algoritmo estricto de RRHH. Devuelve un objeto JSON con la propiedad "horario" que contenga el array de empleados.
@@ -27,6 +28,8 @@ export async function POST(req: Request) {
 
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();
+    
+    // Limpieza de Markdown por seguridad
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     
     return NextResponse.json(JSON.parse(responseText));
