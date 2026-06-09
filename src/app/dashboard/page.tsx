@@ -90,13 +90,13 @@ export default function DashboardPage() {
       const data = await response.json();
       console.log('Respuesta RECIBIDA:', data);
       
-      if (data.newShifts && data.newShifts.employees) {
-        setData(data.newShifts.employees);
+      if (data.horario) {
+        setData(data.horario);
         setOptimized(true);
       }
     } catch (err: any) {
       console.error(err);
-      alert('Error en el frontend: ' + err.message);
+      alert('Error: ' + err.message);
     } finally {
       setLoadingAI(false);
     }

@@ -3,7 +3,6 @@ import Groq from 'groq-sdk';
 
 export async function POST(req: Request) {
   try {
-    console.log('¿La API KEY existe?', !!process.env.GROQ_API_KEY);
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'Missing GROQ_API_KEY in environment variables' }, { status: 500 });
@@ -12,31 +11,23 @@ export async function POST(req: Request) {
     const groq = new Groq({ apiKey });
     
     const body = await req.json();
-    console.log('Recibiendo datos en API:', body);
     const { employees, dias, turnos } = body;
     
     if (!employees || !Array.isArray(employees)) {
       return NextResponse.json({ error: 'Missing or invalid employees data' }, { status: 400 });
     }
 
-    const prompt = `
-Eres un algoritmo estricto de optimización de Recursos Humanos. Tu única función es devolver un arreglo JSON válido con la asignación de turnos. Cero texto adicional.
+    const prompt = `Eres un optimizador de turnos. Tu única salida debe ser un objeto JSON con la propiedad "horario" que contenga el array de empleados actualizados. NUNCA devuelvas texto fuera del JSON. Intenta asignar 5 turnos y 2 días libres por empleado basándote en los datos enviados, respetando sus excepciones.
+
 Contexto:
 - Días activos: ${dias}
 - Turnos permitidos: ${turnos}
 
-REGLAS MATEMÁTICAS INQUEBRANTABLES:
-1. COBERTURA OBLIGATORIA: En cada día activo, DEBE haber obligatoriamente al menos 1 empleado asignado a CADA UNO de los turnos permitidos. NUNCA dejes un turno vacío (ej. nadie en la mañana).
-2. MATEMÁTICA DE 40 HORAS (5 TURNOS): Cada empleado DEBE trabajar exactamente 5 días. Si los Días Activos son "Lunes a Viernes" (5 días), entonces TODOS los empleados deben trabajar de lunes a viernes. NO les des días "Libre" entre semana (Sábado y Domingo serán "Libre"). Si los Días Activos son "Lunes a Domingo", entonces debes asignarles exactamente 2 días "Libre" para que queden en 40 horas.
-3. EXCEPCIONES PESAN MÁS: Si un empleado tiene una excepción (ej. "Libre el viernes"), debes respetarla poniéndole "Libre" ese día, pero DEBES asignar a otro empleado para cubrir su puesto y que no quede vacío.
+Mantén el mismo esquema para cada empleado: id, name, monday, tuesday, wednesday, thursday, friday, saturday, sunday, risk_percentage.
+Baja el risk_percentage a un número menor a 10.
 
-Genera el JSON respetando estas reglas al 100%.
-
-Mantén estrictamente el mismo esquema exacto para cada empleado devuelto: id, name, monday, tuesday, wednesday, thursday, friday, saturday, sunday, risk_percentage.
-OUTPUT FORMAT: RETURN ONLY RAW JSON. DO NOT USE MARKDOWN FORMATTING. DO NOT WRAP IN \`\`\`json. JUST START WITH { AND END WITH }.
 Los empleados y sus excepciones/turnos actuales son:
-${JSON.stringify(employees, null, 2)}
-`;
+${JSON.stringify(employees, null, 2)}`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [{ role: 'system', content: prompt }],
@@ -46,18 +37,10 @@ ${JSON.stringify(employees, null, 2)}
     });
 
     const content = chatCompletion.choices[0]?.message?.content || '{}';
-    console.log('Respuesta de Groq:', content);
+    let cleanText = content.replace(/```json/g, '').replace(/```/g, '').trim();
     
-    let newShifts;
-    try {
-      let cleanText = content.replace(/```json/g, '').replace(/```/g, '').trim();
-      newShifts = JSON.parse(cleanText);
-    } catch (parseError) {
-      console.error('Error parseando JSON de Groq:', parseError);
-      return NextResponse.json({ error: 'La IA no devolvió un JSON válido', rawText: content }, { status: 500 });
-    }
-    
-    return NextResponse.json({ success: true, newShifts });
+    const parsed = JSON.parse(cleanText);
+    return NextResponse.json(parsed);
   } catch (error: any) {
     console.error('Error general en endpoint:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
