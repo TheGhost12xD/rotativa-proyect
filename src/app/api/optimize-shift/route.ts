@@ -18,13 +18,19 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-Eres un optimizador de turnos experto. Debes crear un horario para los días solicitados (${dias}) usando SOLO los turnos permitidos (${turnos}). 
-REGLA DE ORO: Respeta estrictamente las excepciones de cada empleado (ej. si dice Libre el lunes, no le asignes turno ese día). 
-REGLA CRÍTICA LEGAL: Cada empleado DEBE cumplir exactamente con 40 horas semanales. Como cada turno dura 8 horas, DEBES asignar exactamente 5 turnos de trabajo por empleado a la semana. Los días restantes DEBEN decir estrictamente "Libre". Es inaceptable que un empleado tenga menos de 40 horas (menos de 5 turnos) o más de 40 horas, a menos que sea matemáticamente imposible por sus excepciones. Prioriza siempre llegar a los 5 turnos.
-Devuelve ÚNICAMENTE un objeto JSON válido con la propiedad "employees" que contenga el arreglo de empleados actualizado.
+Eres un algoritmo estricto de optimización de Recursos Humanos. Tu única función es devolver un arreglo JSON válido con la asignación de turnos. Cero texto adicional.
+Contexto:
+- Días activos: ${dias}
+- Turnos permitidos: ${turnos}
+
+REGLAS MATEMÁTICAS INQUEBRANTABLES:
+1. COBERTURA OBLIGATORIA: En cada día activo, DEBE haber obligatoriamente al menos 1 empleado asignado a CADA UNO de los turnos permitidos. NUNCA dejes un turno vacío (ej. nadie en la mañana).
+2. MATEMÁTICA DE 40 HORAS (5 TURNOS): Cada empleado DEBE trabajar exactamente 5 días. Si los Días Activos son "Lunes a Viernes" (5 días), entonces TODOS los empleados deben trabajar de lunes a viernes. NO les des días "Libre" entre semana (Sábado y Domingo serán "Libre"). Si los Días Activos son "Lunes a Domingo", entonces debes asignarles exactamente 2 días "Libre" para que queden en 40 horas.
+3. EXCEPCIONES PESAN MÁS: Si un empleado tiene una excepción (ej. "Libre el viernes"), debes respetarla poniéndole "Libre" ese día, pero DEBES asignar a otro empleado para cubrir su puesto y que no quede vacío.
+
+Genera el JSON respetando estas reglas al 100%.
+
 Mantén estrictamente el mismo esquema exacto para cada empleado devuelto: id, name, monday, tuesday, wednesday, thursday, friday, saturday, sunday, risk_percentage.
-Baja el 'risk_percentage' a un número menor a 10.
-Asegúrate de que los valores para los turnos asignados sean únicamente los permitidos en (${turnos}) o "Libre".
 Los empleados y sus excepciones/turnos actuales son:
 ${JSON.stringify(employees, null, 2)}
 `;
