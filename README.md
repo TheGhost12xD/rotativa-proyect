@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rotativa 🕒
 
-## Getting Started
+**Acaba con el caos de administrar turnos rotativos en Excel.**
 
-First, run the development server:
+Rotativa es una aplicación web impulsada por Inteligencia Artificial diseñada para optimizar, generar y gestionar mallas de turnos rotativos para empresas. Usando el poder del modelo Llama 3 de 70 Billones de parámetros (vía Groq), resuelve el complejo problema matemático de asignar horarios respetando restricciones legales (40 horas semanales), excepciones médicas/personales y garantizando la cobertura de los turnos operativos.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Características Principales
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Automatización Impulsada por IA:** Asignación automática de turnos (Mañana, Tarde, Noche, Libre) garantizando cobertura en todos los días activos.
+- **Resolución de Restricciones (40 Horas):** Algoritmo estricto que asegura matemáticamente que cada empleado cumpla exactamente con 5 turnos laborables y 2 días libres por semana.
+- **Carga Masiva vía CSV:** Interfaz fluida para importar datos de empleados, incluyendo sus excepciones o días libres pre-aprobados, directamente desde Excel/CSV (gracias a PapaParse).
+- **Prevención de Fatiga:** Indicadores visuales y alertas de sobrecarga de horas para el personal crítico.
+- **Gestión de Fines de Semana:** Configuración dinámica para operar de Lunes a Viernes (descanso obligatorio sábados y domingos) o de Lunes a Domingo.
+- **Lista de Espera Integrada:** Landing page de alta conversión conectada a Supabase para captar leads y prospectos.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 💻 Stack Tecnológico
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Frontend:** Next.js (App Router), React, Tailwind CSS, Lucide Icons.
+- **Backend/IA:** Next.js Route Handlers, Groq SDK (`llama-3.3-70b-versatile`) para inferencia lógica rápida y potente.
+- **Base de Datos:** Supabase (PostgreSQL) para persistencia de la Waitlist.
+- **Procesamiento de Datos:** PapaParse para lectura de CSV en el lado del cliente (sin saturar el servidor).
 
-## Learn More
+## 🛠️ Configuración Local
 
-To learn more about Next.js, take a look at the following resources:
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/TheGhost12xD/rotativa-proyect.git
+   cd rotativa-proyect
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Configura las variables de entorno. Crea un archivo `.env.local` en la raíz del proyecto y añade:
+   ```env
+   # Base de datos (Lista de espera)
+   NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
 
-## Deploy on Vercel
+   # Motor de Inteligencia Artificial (Optimización de turnos)
+   GROQ_API_KEY=tu_groq_api_key
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Ejecuta el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación.
+
+## 🧠 ¿Cómo funciona la Inteligencia Artificial?
+
+El núcleo de Rotativa vive en `app/api/optimize-shift/route.ts`. Utilizamos **Few-Shot Prompting** y directrices dictatoriales (System Prompts inquebrantables) para forzar al modelo Llama a comportarse como un motor de CSP (Constraint Satisfaction Problem). 
+
+La IA evalúa:
+1. Las **excepciones** de los empleados pasadas por el CSV.
+2. Los **días operativos** (e.g. Lunes a Viernes).
+3. Los **turnos habilitados**.
+4. Y retorna un objeto JSON estricto con los días rellenados, permitiendo colisiones (varias personas en un mismo turno) si es matemáticamente necesario para evitar que alguien se quede con días vacíos o trabaje menos de 40 horas.
+
+## 👨‍💻 Autor
+
+Desarrollado con foco en resolver el dolor real de la administración de RRHH y recursos físicos.
