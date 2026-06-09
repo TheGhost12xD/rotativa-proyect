@@ -8,9 +8,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { dias, turnos, employees } = body;
     
-    // Usamos gemini-1.5-flash-latest y forzamos salida JSON nativa
+    // Usamos gemini-1.5-pro y forzamos salida JSON nativa
     const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash-latest',
+        model: 'gemini-1.5-pro',
         generationConfig: { responseMimeType: 'application/json' }
     });
 
