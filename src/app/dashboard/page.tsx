@@ -88,6 +88,7 @@ export default function DashboardPage() {
       }
 
       const resData = await response.json();
+      console.log('Respuesta recibida del servidor:', resData);
       
       if (resData.newShifts && resData.newShifts.employees) {
         setData(resData.newShifts.employees);
