@@ -107,6 +107,30 @@ export default function DashboardPage() {
     }
   };
 
+  const exportarCSV = () => {
+    if (!data || data.length === 0) {
+      alert('No hay datos para exportar.');
+      return;
+    }
+
+    const headers = "ID,Nombre,Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo\n";
+    const rows = data.map((emp: any) => {
+      const name = emp.name && emp.name.includes(',') ? `"${emp.name}"` : (emp.name || '');
+      return `${emp.id},${name},${emp.monday || 'Libre'},${emp.tuesday || 'Libre'},${emp.wednesday || 'Libre'},${emp.thursday || 'Libre'},${emp.friday || 'Libre'},${emp.saturday || 'Libre'},${emp.sunday || 'Libre'}`;
+    });
+
+    const csvContent = "\uFEFF" + headers + rows.join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'malla_turnos.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const calculateTotalHours = (emp: any) => {
     let weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     if (dias === 'Lunes a Viernes') {
@@ -452,6 +476,15 @@ export default function DashboardPage() {
                           )}
                         </button>
                       </div>
+                    )}
+
+                    {data.length > 0 && (
+                      <button 
+                        onClick={exportarCSV}
+                        className="w-full mt-4 bg-green-600 text-white hover:bg-green-700 font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.23)] transform hover:-translate-y-0.5"
+                      >
+                        📥 Descargar Excel (CSV)
+                      </button>
                     )}
                   </div>
                 </div>
