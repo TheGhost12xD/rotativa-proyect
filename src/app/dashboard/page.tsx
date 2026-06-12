@@ -113,14 +113,17 @@ export default function DashboardPage() {
       return;
     }
 
-    const headers = "ID,Nombre,Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo\n";
+    const headers = "ID;Nombre;Excepciones;Lunes;Martes;Miércoles;Jueves;Viernes;Sábado;Domingo\n";
     const rows = data.map((emp: any) => {
-      const name = emp.name && emp.name.includes(',') ? `"${emp.name}"` : (emp.name || '');
-      return `${emp.id},${name},${emp.monday || 'Libre'},${emp.tuesday || 'Libre'},${emp.wednesday || 'Libre'},${emp.thursday || 'Libre'},${emp.friday || 'Libre'},${emp.saturday || 'Libre'},${emp.sunday || 'Libre'}`;
+      const name = emp.name && emp.name.includes(';') ? `"${emp.name}"` : (emp.name || '');
+      const excepciones = emp.excepciones && emp.excepciones.includes(';') ? `"${emp.excepciones}"` : (emp.excepciones || '');
+      return `${emp.id};${name};${excepciones};${emp.monday || 'Libre'};${emp.tuesday || 'Libre'};${emp.wednesday || 'Libre'};${emp.thursday || 'Libre'};${emp.friday || 'Libre'};${emp.saturday || 'Libre'};${emp.sunday || 'Libre'}`;
     });
 
-    const csvContent = "\uFEFF" + headers + rows.join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = headers + rows.join("\n");
+    const BOM = '\uFEFF';
+    const csvCompleto = BOM + csvContent;
+    const blob = new Blob([csvCompleto], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement('a');
